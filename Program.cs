@@ -11,13 +11,13 @@ namespace Tfyat
         {
             string path = @"C:\Users\k_yak\source\repos\tfyat\in.txt";
             string output = @"C:\Users\k_yak\source\repos\tfyat\output.txt";
-            Dictionary<string, List<int>> res = Foo(path);
+            Dictionary<string, HashSet<int>> res = ProcessInputFile(path);
             WriteResult(res, output, path);
         }
 
-        static Dictionary<string, List<int>> Foo(string path)
+        static Dictionary<string, HashSet<int>> ProcessInputFile(string path)
         {
-            Dictionary<string, List<int>> pairs = new Dictionary<string, List<int>>();
+            Dictionary<string, HashSet<int>> wordsToLines = new Dictionary<string, HashSet<int>>();
             int counter = 0;
 
             using (var reader = new StreamReader(path))
@@ -28,19 +28,14 @@ namespace Tfyat
                     var line = reader.ReadLine();
                     if (line != null)
                     {
+                        line = line.ToLower();
                         counter++;
+
                         foreach (char c in line)
                         {
-                            if (c == ' ')
+                            if (c == ' ' && current.Length > 0)
                             {
-                                if (pairs.ContainsKey(current))
-                                {
-                                    pairs[current].Add(counter);
-                                }
-                                else
-                                {
-                                    pairs[current] = new List<int>() { counter };
-                                }
+                                AddWordOrCounter(wordsToLines, current, counter);
 
                                 current = string.Empty;
                             }
@@ -52,16 +47,31 @@ namespace Tfyat
                             }
                         }
 
+                        if (!string.IsNullOrEmpty(current))
+                        {
+                            AddWordOrCounter(wordsToLines, current, counter);
+                        }
                         current = string.Empty;
                     }
                     
                 }
             }
 
-            return pairs;
+            return wordsToLines;
         }
 
-        static void WriteResult(Dictionary<string, List<int>> input, string outputPath, string inputPath)
+        static void AddWordOrCounter(Dictionary<string, HashSet<int>> wordsToLines, string word, int counter)
+        {
+            if (!wordsToLines.ContainsKey(word))
+            {
+                wordsToLines[word] = new HashSet<int>() { counter };
+                return;
+            }
+
+            wordsToLines[word].Add(counter);
+        }
+
+        static void WriteResult(Dictionary<string, HashSet<int>> input, string outputPath, string inputPath)
         {
             var sorted = input.Keys.OrderBy(k => k);
             using (var writer = new StreamWriter(outputPath))
